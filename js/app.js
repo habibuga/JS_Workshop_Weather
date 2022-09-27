@@ -1,12 +1,26 @@
 const apiKey = 'e0a4e5e86a284f9d9a6115907222609';
 const apiHost = 'http://api.weatherapi.com/v1/forecast.json?key=';
-// const apiHost = 'http://api.weatherapi.com/v1/forecast.json?key=twoj_klucz&q=nazwa_miasta_lub_auto:ip&days=5';
+const weekDays = ['Niedziela', 'Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota'];
 
 function addSearchForm (event) {
     event.preventDefault();
 
     const searchForm = document.querySelector(".module__form");
     searchForm.removeAttribute('hidden');
+}
+
+function addCloseBtns () {
+    const closeBtns = document.querySelectorAll('.btn--close');
+    closeBtns.forEach((btn) => {
+        btn.addEventListener('click', (event) => {
+            event.preventDefault();
+            if (btn.parentElement.classList.contains('module__weather')) {
+                btn.parentElement.remove();
+            } else {
+                btn.parentElement.hidden = true;
+            }
+        })
+    });
 }
 
 async function getWeather (event) {
@@ -28,6 +42,8 @@ async function getWeather (event) {
         const forecastTemp = document.querySelector('.module__weather');
         const forecastHTML = forecastTemp.cloneNode(true);
         forecastHTML.removeAttribute('hidden');
+
+        // populate current weather
         const cityName = forecastHTML.querySelector('.city__name');
         cityName.innerText = data.location.name;
         const tempValue = forecastHTML.querySelector('.temperature__value');
@@ -42,17 +58,25 @@ async function getWeather (event) {
         weatherIcon.firstElementChild.src = data.current.condition.icon;
         forecastTemp.parentNode.insertBefore(forecastHTML, forecastTemp.nextSibling);
 
-        const closeBtns = document.querySelectorAll('.btn--close');
-        closeBtns.forEach((btn) => {
-            btn.addEventListener('click', (event) => {
-                event.preventDefault();
-                if (btn.parentElement.classList.contains('module__weather')) {
-                    btn.parentElement.remove();
-                } else {
-                    btn.parentElement.hidden = true;
-                }
-            })
-        });
+        // populate forecast weather
+        const forecastList = forecastHTML.querySelector('.weather__forecast');
+        let i = 0;
+        [...forecastList.childNodes].forEach((li) => {
+            if (li.tagName === 'LI') {
+                const weekDay = li.querySelector('.day');
+                weekDay.innerText = weekDays[new Date(data.forecast.forecastday[i].date).getDay()];
+
+                const weatherImg = li.querySelector('img');
+                weatherImg.src = data.forecast.forecastday[i].day.condition.icon;
+
+                const weatherTemp = li.querySelector('.temperature');
+                weatherTemp.innerText = data.forecast.forecastday[i].day.avgtemp_c;
+
+                i++
+            }
+        })
+
+        addCloseBtns();
 
     } catch (error) {
         console.log(error);
@@ -62,23 +86,13 @@ async function getWeather (event) {
 
 document.addEventListener("DOMContentLoaded", () => {
     const addCityBtn = document.querySelector("#add-city");
-    const closeBtns = document.querySelectorAll('.btn--close');
     const searchWeatherBtn = document.querySelector('.find-city :nth-child(2)')
 
     addCityBtn.addEventListener('click', addSearchForm);
 
     searchWeatherBtn.addEventListener('click', getWeather);
 
-    closeBtns.forEach((btn) => {
-        btn.addEventListener('click', (event) => {
-            event.preventDefault();
-            if (btn.parentElement.classList.contains('module__weather')) {
-                btn.parentElement.remove();
-            } else {
-                btn.parentElement.hidden = true;
-            }
-        })
-    });
+    addCloseBtns();
 })
 
 
